@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Rede do Bem</string>
+    <string name="title_activity_maps">MapsActivity</string>
+    <string name="AddItens">Adicionar Itens</string>
+    <string name="AddLocal">Adicionar Local</string>
+    <string name="addItens">Adicionar Itens</string>
+    <string name="nome">Nome</string>
+    <string name="cep">CEP</string>
+    <string name="CEP_INPUT">Exemplo: 1248-660</string>
+    <string name="estado">Estado</string>
+    <string name="cidade">Cidade</string>
+    <string name="bairro">Bairro</string>
+    <string name="endereco">Endereço</string>
+    <string name="numero">Número</string>
+    <string name="itensDoado">Itens a serem doados</string>
+    <string name="addItens_value">Adicionar Itens</string>
+</resources>
