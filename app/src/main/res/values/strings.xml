@@ -14,4 +14,5 @@
     <string name="numero">Número</string>
     <string name="itensDoado">Itens a serem doados</string>
     <string name="addItens_value">Adicionar Itens</string>
+    <string name="nomedolocal">Nome do local</string>
 </resources>
