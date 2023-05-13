@@ -1,5 +1,7 @@
 package pdm.pratica04;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -10,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -20,6 +23,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Task;
 
@@ -87,12 +91,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        LatLng recife = new LatLng(-8.05, -34.9);
+        LatLng centrodedoacaoemrecife = new LatLng(-8.05, -34.9);
         LatLng caruaru = new LatLng(-8.27, -35.98);
         LatLng joaopessoa = new LatLng(-7.12, -34.84);
         mMap.addMarker(new MarkerOptions().
-                position(recife).
-                title("Recife").
+                position(centrodedoacaoemrecife).
+                title("Centro de doação\n").
+
+                snippet("Recebendo:\n- Item 1\n- Item 2\n- Item 3\n- Item 4\n- Item 5").
                 icon(BitmapDescriptorFactory.defaultMarker(35)));
         mMap.addMarker(new MarkerOptions().
                 position(caruaru).
@@ -102,7 +108,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 position(joaopessoa).
                 title("João Pessoa").
                 icon(BitmapDescriptorFactory.defaultMarker(230)));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(recife));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(centrodedoacaoemrecife));
 
         mMap.setOnMarkerClickListener(marker -> {
             Toast.makeText(MapsActivity.this,
@@ -110,10 +116,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Toast.LENGTH_SHORT).show();
             return false;
         });
-
+        //possivelmente é nessa função em baixo que eu vou ter que armazenar a localização que o
+        //usuário for digitar
         mMap.setOnMapClickListener(latLng -> mMap.addMarker(new MarkerOptions().
                 position(latLng).
-                title("Adicionado em " + new Date()).
+                title("Local de doação:\nData: " + new Date()).
                 icon(BitmapDescriptorFactory.defaultMarker(0))));
 
         mMap.setOnMyLocationButtonClickListener(
@@ -130,6 +137,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setMyLocationEnabled(this.fine_location);
 
         findViewById(R.id.button_location).setEnabled(this.fine_location);
+        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+
+            @Override
+            public View getInfoWindow(Marker marker) {
+                // Retorna null para indicar que o layout padrão do InfoWindow não deve ser usado
+                return null;
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                // Infla o layout do InfoWindow personalizado
+                View view = getLayoutInflater().inflate(R.layout.custom_info_window, null);
+
+                // Obtém as referências para os elementos de layout dentro do InfoWindow personalizado
+                TextView titleTextView = view.findViewById(R.id.titleTextView);
+                TextView snippetTextView = view.findViewById(R.id.snippetTextView);
+
+                // Define o texto dos elementos de layout com as informações do marcador
+                titleTextView.setText(marker.getTitle());
+                snippetTextView.setText(marker.getSnippet());
+
+                // Retorna a View personalizada para ser exibida dentro do InfoWindow
+                return view;
+            }
+        });
 
     }
 
