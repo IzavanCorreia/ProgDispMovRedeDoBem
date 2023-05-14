@@ -1,17 +1,22 @@
 package pdm.pratica04;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,22 +26,87 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Task;
 
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import pdm.pratica04.databinding.ActivityMapsBinding;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+    private boolean isDonor = false; // declare isDonor as a field
 
     private static final int FINE_LOCATION_REQUEST = 1;
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
     private boolean fine_location;
+    private String markerTitle;
+    private void showEditDialog(Marker marker) {
+        // Obter a lista de itens doados do marcador
+        String snippet = marker.getSnippet();
+        List<String> items = new ArrayList<>();
+        if (snippet != null && !snippet.isEmpty()) {
+            String[] parts = snippet.split(":\\n")[1].split("\\n");
+            for (String part : parts) {
+                items.add(part.substring(3));
+            }
+        }
+
+        // Criar um layout personalizado para a caixa de diálogo
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+        for (String item : items) {
+            // Adicionar uma entrada de texto para cada item doado
+            EditText editText = new EditText(this);
+            editText.setText(item);
+            layout.addView(editText);
+        }
+
+        // Adicionar um botão "Adicionar item"
+        Button addButton = new Button(this);
+        addButton.setText("Adicionar item");
+        addButton.setOnClickListener(view -> {
+            EditText editText = new EditText(this);
+            editText.setHint("Digite o nome do item");
+            layout.addView(editText);
+        });
+        layout.addView(addButton);
+
+        // Exibir a caixa de diálogo para editar os itens
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Editar itens doados")
+                .setView(layout)
+                .setPositiveButton("Salvar", (dialog, which) -> {
+                    // Atualizar os itens doados no marcador
+                    StringBuilder newSnippet = new StringBuilder("Itens doados:\n");
+                    for (int i = 0; i < layout.getChildCount(); i++) {
+                        View child = layout.getChildAt(i);
+                        if (child instanceof EditText) {
+                            String itemName = ((EditText) child).getText().toString().trim();
+                            if (!itemName.isEmpty()) {
+                                newSnippet.append(String.format("%d- %s\n", i + 1, itemName));
+                            }
+                        }
+                    }
+                    if (newSnippet.toString().equals("Itens doados:\n")) {
+                        marker.setSnippet("");
+                    } else {
+                        marker.setSnippet(newSnippet.toString());
+                    }
+                })
+                .setNegativeButton("Cancelar", (dialog, which) -> {
+                    dialog.cancel();
+                })
+                .show();
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,8 +144,74 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.setMyLocationEnabled(this.fine_location);
         }
 
-        findViewById(R.id.button_location).setEnabled(this.fine_location);
+        //findViewById(R.id.button_location).setEnabled(this.fine_location);
     }
+    // Método para editar um marcador existente
+    private void editarMarcador(Marker marker) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Editar marcador");
+
+        // Opções de doação
+        final String[] donationOptions = {"Centro de doação", "Doador"};
+        int selectedOption = marker.getTitle().equals("Centro de doação") ? 0 : 1;
+        builder.setSingleChoiceItems(donationOptions, selectedOption, (dialog, which) -> {
+            if (which == 0) {
+                // Centro de doação selecionado
+                marker.setTitle("Centro de doação");
+            } else if (which == 1) {
+                // Doador selecionado
+                marker.setTitle("Doador");
+            }
+        });
+
+        // Lista de itens doados
+        final List<String> donatedItems = new ArrayList<>();
+        String[] items = marker.getSnippet().split(":")[1].split("\n");
+        for (String item : items) {
+            if (!item.isEmpty()) {
+                donatedItems.add(item.trim());
+            }
+        }
+
+        // Campo para adicionar ou remover itens
+        final EditText input = new EditText(this);
+        final ArrayAdapter<String> itemsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, donatedItems);
+        final ListView listView = new ListView(this);
+        listView.setAdapter(itemsAdapter);
+        builder.setView(listView);
+        builder.setPositiveButton("Adicionar item", (dialog, which) -> {
+            String item = input.getText().toString().trim();
+            if (!item.isEmpty()) {
+                donatedItems.add(item);
+                input.setText("");
+                itemsAdapter.notifyDataSetChanged();
+            }
+        });
+        builder.setNegativeButton("Remover item", (dialog, which) -> {
+            int position = listView.getCheckedItemPosition();
+            if (position != ListView.INVALID_POSITION) {
+                donatedItems.remove(position);
+                itemsAdapter.notifyDataSetChanged();
+            }
+        });
+
+        // Configurar os botões "OK" e "Cancelar"
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            // Atualizar informações adicionais do marcador como um snippet
+            String snippet = "Itens doados:\n";
+            for (String item : donatedItems) {
+                snippet += "- " + item + "\n";
+            }
+            marker.setSnippet(snippet);
+        });
+        builder.setNegativeButton("Cancelar", (dialog, which) -> {
+            dialog.cancel();
+        });
+
+        // Exibir o diálogo
+        builder.show();
+    }
+
 
 
     /**
@@ -111,17 +247,177 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.newLatLng(centrodedoacaoemrecife));
 
         mMap.setOnMarkerClickListener(marker -> {
-            Toast.makeText(MapsActivity.this,
-                    "Você clicou em " + marker.getTitle(),
-                    Toast.LENGTH_SHORT).show();
+            // Verificar se o marcador foi criado pelo usuário (e não pelo sistema)
+            if (!marker.getTitle().equals("Localização atual")) {
+                String title = marker.getTitle();
+                String snippet = marker.getSnippet();
+                if (snippet == null || snippet.isEmpty()) {
+                    snippet = "Nenhum item doado registrado";
+                }
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                String finalSnippet = snippet;
+                builder.setTitle(title)
+                        .setMessage(snippet)
+                        .setPositiveButton("OK", (dialog, which) -> {
+                            dialog.dismiss();
+                        })
+                        .setNegativeButton("Editar", (dialog, which) -> {
+                            // Abrir um novo AlertDialog para editar os itens doados
+                            AlertDialog.Builder editBuilder = new AlertDialog.Builder(this);
+                            editBuilder.setTitle("Editar itens doados");
+
+                            // Configurar os itens doados
+                            final List<String> donatedItems = new ArrayList<>();
+                            final LinearLayout layout = new LinearLayout(this);
+                            layout.setOrientation(LinearLayout.VERTICAL);
+                            editBuilder.setView(layout);
+
+                            // Adicionar os itens doados atuais como campos de edição de texto pré-preenchidos
+                            String[] items = finalSnippet.split("\n");
+                            for (int i = 1; i < items.length; i++) {
+                                final EditText itemInput = new EditText(this);
+                                itemInput.setText(items[i].substring(3)); // Ignorar o número de item (exemplo: "1- Arroz" -> "Arroz")
+                                layout.addView(itemInput);
+                                donatedItems.add(items[i].substring(3));
+                            }
+
+                            // Botão "Adicionar item"
+                            Button addButton = new Button(this);
+                            addButton.setText("Adicionar item");
+                            addButton.setOnClickListener(view -> {
+                                final EditText itemInput = new EditText(this);
+                                itemInput.setHint("Digite o nome do item");
+                                layout.addView(itemInput);
+                            });
+                            layout.addView(addButton);
+
+                            // Configurar os botões "Salvar" e "Cancelar"
+                            editBuilder.setPositiveButton("Salvar", (editDialog, editWhich) -> {
+                                // Atualizar o snippet do marcador com os novos itens doados
+                                StringBuilder newSnippet = new StringBuilder("Itens doados:\n");
+                                for (int i = 0; i < layout.getChildCount(); i++) {
+                                    View child = layout.getChildAt(i);
+                                    if (child instanceof EditText) {
+                                        String itemName = ((EditText) child).getText().toString().trim();
+                                        if (!itemName.isEmpty()) {
+                                            donatedItems.add(itemName);
+                                            newSnippet.append(String.format("%d- %s\n", donatedItems.size(), itemName));
+                                        }
+                                    }
+                                }
+                                if (donatedItems.size() > 0) {
+                                    marker.setSnippet(newSnippet.toString());
+                                } else {
+                                    marker.setSnippet("Nenhum item doado registrado");
+                                }
+                                Toast.makeText(this, "Itens doados atualizados", Toast.LENGTH_SHORT).show();
+                            });
+                            editBuilder.setNegativeButton("Cancelar", (editDialog, editWhich) -> {
+// Não fazer nada
+                            });
+                            editBuilder.show();
+                        })
+                        .setNeutralButton("Deletar", (dialog, which) -> {
+// Remover o marcador do mapa
+                            marker.remove();
+                        })
+                        .show();
+                return true;
+            }
             return false;
         });
+
+
+                                            mMap.setOnMarkerClickListener(marker -> {
+            if (marker.getSnippet() != null && !marker.getSnippet().isEmpty()) {
+                // Exibir as informações adicionais do marcador em um diálogo
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle(marker.getTitle());
+                builder.setMessage(marker.getSnippet());
+                builder.setPositiveButton("OK", (dialog, which) -> {
+                    dialog.dismiss();
+                });
+                builder.show();
+                return true;
+            } else {
+                return false;
+            }
+        });
+
+
         //possivelmente é nessa função em baixo que eu vou ter que armazenar a localização que o
         //usuário for digitar
-        mMap.setOnMapClickListener(latLng -> mMap.addMarker(new MarkerOptions().
-                position(latLng).
-                title("Local de doação:\nData: " + new Date()).
-                icon(BitmapDescriptorFactory.defaultMarker(0))));
+
+        mMap.setOnMapClickListener(latLng -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Novo ponto, você é um doador ou um centro de doação?");
+
+            // Opções de doação
+            final String[] donationOptions = {"Centro de doação", "Doador"};
+            builder.setSingleChoiceItems(donationOptions, -1, (dialog, which) -> {
+                if (which == 0) {
+                    // Centro de doação selecionado
+                    isDonor = false;
+                } else if (which == 1) {
+                    // Doador selecionado
+                    isDonor = true;
+                }
+            });
+
+            // Configurar os itens doados
+            final List<String> donatedItems = new ArrayList<>();
+            final LinearLayout layout = new LinearLayout(this);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            builder.setView(layout);
+
+            // Botão "Adicionar item"
+            Button addButton = new Button(this);
+            addButton.setText("Adicionar item");
+            addButton.setOnClickListener(view -> {
+                final EditText itemInput = new EditText(this);
+                itemInput.setHint("Digite o nome do item");
+                layout.addView(itemInput);
+            });
+            layout.addView(addButton);
+
+            // Configurar os botões "OK" e "Cancelar"
+            builder.setPositiveButton("OK", (dialog, which) -> {
+                // Adicionar marcador com título e ícone baseado na opção selecionada
+                markerTitle = isDonor ? "Doador" : "Centro de doação";
+                BitmapDescriptor icon = isDonor ? BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE) : BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
+                MarkerOptions markerOptions = new MarkerOptions()
+                        .position(latLng)
+                        .title(markerTitle)
+                        .icon((icon));
+                mMap.addMarker(markerOptions);
+
+                // Adicionar informações adicionais do marcador como um snippet
+                StringBuilder snippet = new StringBuilder("Itens doados:\n");
+                for (int i = 0; i < layout.getChildCount(); i++) {
+                    View child = layout.getChildAt(i);
+                    if (child instanceof EditText) {
+                        String itemName = ((EditText) child).getText().toString().trim();
+                        if (!itemName.isEmpty()) {
+                            donatedItems.add(itemName);
+                            snippet.append(String.format("%d- %s\n", donatedItems.size(), itemName));
+                        }
+                    }
+                }
+                if (donatedItems.size() > 0) {
+                    mMap.addMarker(markerOptions.snippet(snippet.toString()));
+                }
+            });
+            builder.setNegativeButton("Cancelar", (dialog, which) -> {
+                dialog.cancel();
+            });
+
+            // Exibir o diálogo
+            builder.show();
+        });
+
+
+
+
 
         mMap.setOnMyLocationButtonClickListener(
                 () -> {
@@ -136,7 +432,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mMap.setMyLocationEnabled(this.fine_location);
 
-        findViewById(R.id.button_location).setEnabled(this.fine_location);
+        //findViewById(R.id.button_location).setEnabled(this.fine_location);
         mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
 
             @Override
