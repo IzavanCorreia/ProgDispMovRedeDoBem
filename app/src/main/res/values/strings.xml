@@ -15,4 +15,5 @@
     <string name="itensDoado">Itens a serem doados</string>
     <string name="addItens_value">Adicionar Itens</string>
     <string name="nomedolocal">Nome do local</string>
+    <string name="login_ir">Faça seu login</string>
 </resources>

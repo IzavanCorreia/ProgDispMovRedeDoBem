@@ -6,6 +6,7 @@ import androidx.fragment.app.FragmentActivity;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
@@ -47,6 +48,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ActivityMapsBinding binding;
     private boolean fine_location;
     private String markerTitle;
+
+
+
     private void showEditDialog(Marker marker) {
         // Obter a lista de itens doados do marcador
         String snippet = marker.getSnippet();
@@ -131,6 +135,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
                 FINE_LOCATION_REQUEST);
     }
+
+
+
 
     @SuppressLint("MissingPermission")
     public void onRequestPermissionsResult(int requestCode,
@@ -261,6 +268,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         .setPositiveButton("OK", (dialog, which) -> {
                             dialog.dismiss();
                         })
+                        .setNegativeButton("Visualizar", (dialog, which) -> {
+                            // Abrir um novo AlertDialog para visualizar os itens doados
+                            AlertDialog.Builder viewBuilder = new AlertDialog.Builder(this);
+                            viewBuilder.setTitle("Itens doados");
+
+                            // Configurar os itens doados
+                            final LinearLayout layout = new LinearLayout(this);
+                            layout.setOrientation(LinearLayout.VERTICAL);
+                            viewBuilder.setView(layout);
+
+                            // Adicionar os itens doados como campos de texto desabilitados
+                            String[] items = finalSnippet.split("\n");
+                            for (int i = 1; i < items.length; i++) {
+                                TextView itemText = new TextView(this);
+                                itemText.setText(items[i].substring(3)); // Ignorar o número de item (exemplo: "1- Arroz" -> "Arroz")
+                                itemText.setEnabled(false);
+                                layout.addView(itemText);
+                            }
+
+                            // Configurar o botão "OK"
+                            viewBuilder.setPositiveButton("OK", (viewDialog, viewWhich) -> {
+                                // Não fazer nada
+                            });
+                            viewBuilder.show();
+                        })
+                        .setNeutralButton("Deletar", (dialog, which) -> {
+                            // Remover o marcador do mapa
+                            marker.remove();
+                        })
                         .setNegativeButton("Editar", (dialog, which) -> {
                             // Abrir um novo AlertDialog para editar os itens doados
                             AlertDialog.Builder editBuilder = new AlertDialog.Builder(this);
@@ -293,42 +329,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                             // Configurar os botões "Salvar" e "Cancelar"
                             editBuilder.setPositiveButton("Salvar", (editDialog, editWhich) -> {
-                                // Atualizar o snippet do marcador com os novos itens doados
-                                StringBuilder newSnippet = new StringBuilder("Itens doados:\n");
-                                for (int i = 0; i < layout.getChildCount(); i++) {
-                                    View child = layout.getChildAt(i);
-                                    if (child instanceof EditText) {
-                                        String itemName = ((EditText) child).getText().toString().trim();
-                                        if (!itemName.isEmpty()) {
-                                            donatedItems.add(itemName);
-                                            newSnippet.append(String.format("%d- %s\n", donatedItems.size(), itemName));
-                                        }
+// Criar um novo snippet com os itens doados atualizados
+                                    StringBuilder newSnippet = new StringBuilder();
+                            newSnippet.append("Itens doados:\n");
+                            int itemCount = 1;
+                            for (int i = 0; i < layout.getChildCount(); i++) {
+                                View child = layout.getChildAt(i);
+                                if (child instanceof EditText) {
+                                    String itemName = ((EditText) child).getText().toString();
+                                    if (!itemName.isEmpty()) {
+                                        newSnippet.append(itemCount).append("- ").append(itemName).append("\n");
+                                        donatedItems.add(itemName);
+                                        itemCount++;
                                     }
                                 }
-                                if (donatedItems.size() > 0) {
-                                    marker.setSnippet(newSnippet.toString());
-                                } else {
-                                    marker.setSnippet("Nenhum item doado registrado");
-                                }
-                                Toast.makeText(this, "Itens doados atualizados", Toast.LENGTH_SHORT).show();
-                            });
-                            editBuilder.setNegativeButton("Cancelar", (editDialog, editWhich) -> {
-// Não fazer nada
-                            });
-                            editBuilder.show();
+                            }                    // Atualizar o snippet do marcador e exibir uma mensagem de sucesso
+                            marker.setSnippet(newSnippet.toString());
+                            Toast.makeText(this, "Itens doados atualizados com sucesso!", Toast.LENGTH_SHORT).show();
                         })
-                        .setNeutralButton("Deletar", (dialog, which) -> {
-// Remover o marcador do mapa
-                            marker.remove();
+                        .setNegativeButton("Cancelar", (editDialog, editWhich) -> {
+                            // Não fazer nada
                         })
                         .show();
-                return true;
-            }
-            return false;
-        });
+            });
+
+            return true;
+        }
+
+        return false;
+    });
 
 
-                                            mMap.setOnMarkerClickListener(marker -> {
+
+
+
+
+
+
+
+        mMap.setOnMarkerClickListener(marker -> {
             if (marker.getSnippet() != null && !marker.getSnippet().isEmpty()) {
                 // Exibir as informações adicionais do marcador em um diálogo
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -482,6 +521,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         "Long: " + location.getLongitude(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+
+    public void goToLogin(View view) {
+        Intent intent = new Intent(this, LoginActivity.class);
+        startActivity(intent);
     }
 
     public void irParaActivityAddItens(View view) {
