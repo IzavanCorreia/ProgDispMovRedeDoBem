@@ -33,8 +33,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:background="@color/teal_700"
-            android:onClick="goToMaps"
-            android:text="Entrar" />
+            android:onClick="goToLogin"
+            android:text="Criar" />
 
 
         <Button
@@ -43,8 +43,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:background="@color/teal_700"
-            android:onClick="goToRegistro"
-            android:text="Registrar" />
+            android:onClick="goToLogin"
+            android:text="Login" />
 
     </LinearLayout>
 

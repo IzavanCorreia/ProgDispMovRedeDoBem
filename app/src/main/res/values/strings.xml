@@ -15,5 +15,6 @@
     <string name="itensDoado">Itens a serem doados</string>
     <string name="addItens_value">Adicionar Itens</string>
     <string name="nomedolocal">Nome do local</string>
-    <string name="login_ir">Faça seu login</string>
+    <string name="login_ir">Login</string>
+    <string name="pesquisarValor">Pesquise o centro de doação</string>
 </resources>

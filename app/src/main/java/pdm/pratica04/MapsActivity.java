@@ -246,10 +246,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.addMarker(new MarkerOptions().
                 position(caruaru).
                 title("Caruaru").
+                snippet("Recebendo:\n- Item 1\n- Item 2\n- Item 3\n- Item 4\n- Item 5").
+
                 icon(BitmapDescriptorFactory.defaultMarker(120)));
         mMap.addMarker(new MarkerOptions().
                 position(joaopessoa).
                 title("João Pessoa").
+                snippet("Recebendo:\n- Item 1\n- Item 2\n- Item 3\n- Item 4\n- Item 5").
+
                 icon(BitmapDescriptorFactory.defaultMarker(230)));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(centrodedoacaoemrecife));
 
@@ -529,6 +533,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         startActivity(intent);
     }
 
+    public void goToRegistro(View view) {
+        Intent intent = new Intent(this, RegistroActivity.class);
+        startActivity(intent);
+    }
+    public void goToMaps(View view) {
+        Intent intent = new Intent(this, MapsActivity.class);
+        startActivity(intent);
+    }
     public void irParaActivityAddItens(View view) {
         Intent intent = new Intent(this, AddItens.class);
         startActivity(intent);
