@@ -35,4 +35,5 @@
         android:onClick="goToLogin"
         android:text="@string/login_ir" />
 
+
 </RelativeLayout>

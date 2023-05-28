@@ -17,4 +17,7 @@
     <string name="nomedolocal">Nome do local</string>
     <string name="login_ir">Login</string>
     <string name="pesquisarValor">Pesquise o centro de doação</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
 </resources>

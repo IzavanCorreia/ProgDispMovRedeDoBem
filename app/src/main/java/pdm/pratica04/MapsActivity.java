@@ -6,10 +6,8 @@ import androidx.fragment.app.FragmentActivity;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
@@ -34,11 +32,18 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Task;
 
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import pdm.pratica04.databinding.ActivityMapsBinding;
+
+import retrofit2.Call;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
+import java.io.IOException;
+
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
     private boolean isDonor = false; // declare isDonor as a field
@@ -49,6 +54,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private boolean fine_location;
     private String markerTitle;
 
+
+    Retrofit retrofit = new Retrofit.Builder()
+            .baseUrl("http://127.0.0.1:8000")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build();
+
+    MyApiService apiService = retrofit.create(MyApiService.class);
 
 
     private void showEditDialog(Marker marker) {
@@ -115,6 +127,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_bottom_navigation);
+
 
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -124,6 +138,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         requestPermission();
+
+
     }
 
     private void requestPermission() {
@@ -135,8 +151,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
                 FINE_LOCATION_REQUEST);
     }
-
-
 
 
     @SuppressLint("MissingPermission")
@@ -221,18 +235,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
+
+
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
+
+
         mMap = googleMap;
         LatLng centrodedoacaoemrecife = new LatLng(-8.05, -34.9);
         LatLng caruaru = new LatLng(-8.27, -35.98);
