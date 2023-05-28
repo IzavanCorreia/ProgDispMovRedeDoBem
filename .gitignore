@@ -14,3 +14,7 @@
 .cxx
 local.properties
 /.idea/
+backendmobile/db.sqlite3
+backendmobile/venv/
+backendmobile/.idea/
+
