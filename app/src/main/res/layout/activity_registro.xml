@@ -1,34 +1,75 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="16dp"
+    android:background="#00BCD4">
+
+    <ImageView
+        android:id="@+id/imageLogo"
+        android:layout_width="600dp"
+        android:layout_height="150dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"
+        android:src="@drawable/logoapp" />
 
     <EditText
         android:id="@+id/editTextName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Name" />
+        android:layout_below="@+id/imageLogo"
+        android:layout_marginTop="16dp"
+        android:hint="Nome"
+        android:textColor="#FFFFFF" />
+
+    <EditText
+        android:id="@+id/editTextCPF"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/editTextName"
+        android:layout_marginTop="16dp"
+        android:hint="CPF"
+        android:textColor="#FFFFFF" />
 
     <EditText
         android:id="@+id/editTextEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/editTextName"
-        android:hint="Email" />
+        android:layout_below="@+id/editTextCPF"
+        android:layout_marginTop="16dp"
+        android:hint="E-mail"
+        android:textColor="#FFFFFF" />
 
     <EditText
         android:id="@+id/editTextPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/editTextEmail"
-        android:hint="Password"
-        android:inputType="textPassword" />
+        android:layout_marginTop="16dp"
+        android:hint="Senha"
+        android:inputType="textPassword"
+        android:textColor="#FFFFFF" />
 
-    <Button
-        android:id="@+id/buttonRegister"
-        android:layout_width="wrap_content"
+    <EditText
+        android:id="@+id/editTextConfirmPassword"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/editTextPassword"
-        android:text="Register" />
+        android:layout_marginTop="16dp"
+        android:hint="Confirmar senha"
+        android:inputType="textPassword"
+        android:textColor="#FFFFFF" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonRegister"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/editTextConfirmPassword"
+        android:layout_marginTop="16dp"
+        android:text="Confirmar"
+        android:textColor="#00BCD4"
+        app:backgroundTint="#FFFFFF"
+        app:cornerRadius="8dp"
+        android:padding="10dp" />
 
 </RelativeLayout>

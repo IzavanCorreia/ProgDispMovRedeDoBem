@@ -10,9 +10,11 @@ import androidx.appcompat.app.AppCompatActivity;
 public class RegistroActivity extends AppCompatActivity {
 
     private EditText editTextName;
+    private EditText editTextCPF;
     private EditText editTextEmail;
     private EditText editTextPassword;
-    private EditText editTextCPF;
+    private EditText editTextConfirmPassword;
+
     private Button buttonRegister;
 
     @Override
@@ -22,9 +24,10 @@ public class RegistroActivity extends AppCompatActivity {
 
         // Referenciar os elementos da interface do usuário
         editTextName = findViewById(R.id.editTextName);
+        editTextCPF = findViewById(R.id.editTextCPF);
         editTextEmail = findViewById(R.id.editTextEmail);
         editTextPassword = findViewById(R.id.editTextPassword);
-        editTextCPF = findViewById(R.id.editTextCPF);
+        editTextConfirmPassword = findViewById(R.id.editTextConfirmPassword);
         buttonRegister = findViewById(R.id.buttonRegister);
 
         // Definir um listener para o botão de registro
@@ -32,9 +35,10 @@ public class RegistroActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String name = editTextName.getText().toString();
+                String cpf = editTextCPF.getText().toString();
                 String email = editTextEmail.getText().toString();
                 String password = editTextPassword.getText().toString();
-                String cpf = editTextCPF.getText().toString();
+                String confirmPassword = editTextConfirmPassword.getText().toString();
 
                 // Aqui você pode adicionar a lógica de registro do usuário
                 // Por exemplo, criar um novo usuário no banco de dados
