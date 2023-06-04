@@ -1,3 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources><item type="id" name="activity_maps" />
+    <item name="editTextName" type="id" />
+    <item name="editTextCPF" type="id" />
+    <item name="editTextEmail" type="id" />
+    <item name="editTextPassword" type="id" />
+    <item name="buttonRegister" type="id" />
+    <item name="buttonLogin" type="id" />
+    <item name="textViewRegister" type="id" />
+    <item name="editTextConfirmPassword" type="id" />
 </resources>
