@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -31,14 +32,20 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Task;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.ResponseBody;
 import pdm.pratica04.databinding.ActivityMapsBinding;
 
 import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -240,10 +247,94 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
-
-
-
         mMap = googleMap;
+
+
+        // Criar uma instância do Retrofit
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://192.168.0.117:8000") // Substitua pela URL base da sua API
+                .addConverterFactory(GsonConverterFactory.create()) // Converter automaticamente o JSON em objetos Java
+                .build();
+
+        // Criar uma instância da sua interface
+        MyApiService apiService = retrofit.create(MyApiService.class);
+
+        // Fazer chamada à API para obter os centros
+        Call<ResponseBody> callGetCentros = apiService.getCentros();
+        callGetCentros.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                // Lidar com a resposta da API aqui
+                if (response.isSuccessful()) {
+                    // A requisição foi bem-sucedida
+                    ResponseBody responseBody = response.body();
+                    // Converter o corpo da resposta em uma lista de objetos Centro usando Gson
+                    Gson gson = new Gson();
+                    Type listType = new TypeToken<List<Centro>>() {}.getType();
+                    List<Centro> centros = null;
+                    try {
+                        centros = gson.fromJson(responseBody.string(), listType);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    LatLng teste = new LatLng(-7.12, -34.84);
+
+                    // Iterar sobre os objetos Centro e acessar as propriedades desejadas
+                    double latitude = 0;
+                    double longitude = 0;
+                    String nome ="";
+                    BitmapDescriptor icon;
+
+                    for (Centro centro : centros) {
+                         nome = centro.getNome();
+                         latitude = Double.parseDouble(centro.getLatitude());
+                         longitude = Double.parseDouble(centro.getLongitude());
+                        teste = new LatLng(latitude, longitude);
+
+                        if (centro.isCentro()) {
+                            markerTitle = "Centro de doação";
+                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
+                        } else {
+                            markerTitle = "Pessoa";
+                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE);
+                        }
+
+                        mMap.addMarker(new MarkerOptions().
+                                position(teste).
+                                title(nome).
+
+                                snippet("Recebendo:\n- Item 1\n- Item 2\n- Item 3\n- Item 4\n- Item 5").
+                                icon(icon));
+                        // Faça o que for necessário com os dados obtidos
+                        Log.i("API Success", "Nome: " + nome + ", Latitude: " + latitude + ", Longitude: " + longitude);
+                    }
+
+                    // Faça o processamento necessário com o responseBody
+                } else {
+                    // A requisição retornou um erro
+                    // Obtenha o código de erro e a mensagem de erro
+                    int errorCode = response.code();
+                    String errorMessage = response.message();
+                    System.out.println("Erro na requisição: " + errorCode + " - " + errorMessage);
+                    Log.e("API Failure", "ERRO API: ");
+
+                    // Faça o tratamento de erro apropriado
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                // Lidar com falhas de rede ou outras falhas de comunicação
+                Log.e("API Failure", "Falha na comunicação com a API: " + t.getMessage());
+                Toast.makeText(MapsActivity.this, "Falha na comunicação com a API", Toast.LENGTH_SHORT).show();
+
+
+            }
+        });
+
+        // Restante do código para adicionar marcadores e manipular eventos do mapa...
+
+
         LatLng centrodedoacaoemrecife = new LatLng(-8.05, -34.9);
         LatLng caruaru = new LatLng(-8.27, -35.98);
         LatLng joaopessoa = new LatLng(-7.12, -34.84);
