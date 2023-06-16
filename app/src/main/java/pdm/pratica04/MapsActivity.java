@@ -6,6 +6,7 @@ import androidx.fragment.app.FragmentActivity;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -174,73 +175,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //findViewById(R.id.button_location).setEnabled(this.fine_location);
     }
-    // Método para editar um marcador existente
-    private void editarMarcador(Marker marker) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Editar marcador");
-
-        // Opções de doação
-        final String[] donationOptions = {"Centro de doação", "Doador"};
-        int selectedOption = marker.getTitle().equals("Centro de doação") ? 0 : 1;
-        builder.setSingleChoiceItems(donationOptions, selectedOption, (dialog, which) -> {
-            if (which == 0) {
-                // Centro de doação selecionado
-                marker.setTitle("Centro de doação");
-            } else if (which == 1) {
-                // Doador selecionado
-                marker.setTitle("Doador");
-            }
-        });
-
-        // Lista de itens doados
-        final List<String> donatedItems = new ArrayList<>();
-        String[] items = marker.getSnippet().split(":")[1].split("\n");
-        for (String item : items) {
-            if (!item.isEmpty()) {
-                donatedItems.add(item.trim());
-            }
-        }
-
-        // Campo para adicionar ou remover itens
-        final EditText input = new EditText(this);
-        final ArrayAdapter<String> itemsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, donatedItems);
-        final ListView listView = new ListView(this);
-        listView.setAdapter(itemsAdapter);
-        builder.setView(listView);
-        builder.setPositiveButton("Adicionar item", (dialog, which) -> {
-            String item = input.getText().toString().trim();
-            if (!item.isEmpty()) {
-                donatedItems.add(item);
-                input.setText("");
-                itemsAdapter.notifyDataSetChanged();
-            }
-        });
-        builder.setNegativeButton("Remover item", (dialog, which) -> {
-            int position = listView.getCheckedItemPosition();
-            if (position != ListView.INVALID_POSITION) {
-                donatedItems.remove(position);
-                itemsAdapter.notifyDataSetChanged();
-            }
-        });
-
-        // Configurar os botões "OK" e "Cancelar"
-        builder.setPositiveButton("OK", (dialog, which) -> {
-            // Atualizar informações adicionais do marcador como um snippet
-            String snippet = "Itens doados:\n";
-            for (String item : donatedItems) {
-                snippet += "- " + item + "\n";
-            }
-            marker.setSnippet(snippet);
-        });
-        builder.setNegativeButton("Cancelar", (dialog, which) -> {
-            dialog.cancel();
-        });
-
-        // Exibir o diálogo
-        builder.show();
-    }
-
-
 
 
 
@@ -248,6 +182,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
 
 
         // Criar uma instância do Retrofit
@@ -284,7 +219,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     double longitude = 0;
                     String nome ="";
                     BitmapDescriptor icon;
-
+                    Marker centrodedoacaoemrecife;
                     for (Centro centro : centros) {
                          nome = centro.getNome();
                          latitude = Double.parseDouble(centro.getLatitude());
@@ -299,12 +234,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE);
                         }
 
-                        mMap.addMarker(new MarkerOptions().
+                         centrodedoacaoemrecife = mMap.addMarker(new MarkerOptions().
                                 position(teste).
                                 title(nome).
 
                                 snippet("Recebendo:\n- Item 1\n- Item 2\n- Item 3\n- Item 4\n- Item 5").
                                 icon(icon));
+                        mMap.moveCamera(CameraUpdateFactory.newLatLng(centrodedoacaoemrecife.getPosition()));
+
+
                         // Faça o que for necessário com os dados obtidos
                         Log.i("API Success", "Nome: " + nome + ", Latitude: " + latitude + ", Longitude: " + longitude);
                     }
@@ -335,28 +273,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Restante do código para adicionar marcadores e manipular eventos do mapa...
 
 
-        LatLng centrodedoacaoemrecife = new LatLng(-8.05, -34.9);
-        LatLng caruaru = new LatLng(-8.27, -35.98);
-        LatLng joaopessoa = new LatLng(-7.12, -34.84);
-        mMap.addMarker(new MarkerOptions().
-                position(centrodedoacaoemrecife).
-                title("Centro de doação\n").
-
-                snippet("Recebendo:\n- Item 1\n- Item 2\n- Item 3\n- Item 4\n- Item 5").
-                icon(BitmapDescriptorFactory.defaultMarker(35)));
-        mMap.addMarker(new MarkerOptions().
-                position(caruaru).
-                title("Caruaru").
-                snippet("Recebendo:\n- Item 1\n- Item 2\n- Item 3\n- Item 4\n- Item 5").
-
-                icon(BitmapDescriptorFactory.defaultMarker(120)));
-        mMap.addMarker(new MarkerOptions().
-                position(joaopessoa).
-                title("João Pessoa").
-                snippet("Recebendo:\n- Item 1\n- Item 2\n- Item 3\n- Item 4\n- Item 5").
-
-                icon(BitmapDescriptorFactory.defaultMarker(230)));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(centrodedoacaoemrecife));
 
         mMap.setOnMarkerClickListener(marker -> {
             // Verificar se o marcador foi criado pelo usuário (e não pelo sistema)
@@ -480,6 +396,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 builder.setMessage(marker.getSnippet());
                 builder.setPositiveButton("OK", (dialog, which) -> {
                     dialog.dismiss();
+                }) .setNeutralButton("Deletar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                }) .setNegativeButton("Editar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
                 });
                 builder.show();
                 return true;
@@ -491,6 +417,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //possivelmente é nessa função em baixo que eu vou ter que armazenar a localização que o
         //usuário for digitar
+
 
         mMap.setOnMapClickListener(latLng -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -603,30 +530,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
+
     }
 
-    public void currentLocation(View view) {
-        FusedLocationProviderClient fusedLocationProviderClient =
-                LocationServices.getFusedLocationProviderClient(this);
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        Task<Location> task = fusedLocationProviderClient.getLastLocation();
-        task.addOnSuccessListener(location -> {
-            if (location!=null) {
-                Toast.makeText(MapsActivity.this, "Localização atual: \n" +
-                        "Lat: " + location.getLatitude() + " " +
-                        "Long: " + location.getLongitude(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
 
 
     public void goToLogin(View view) {
@@ -634,22 +540,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         startActivity(intent);
     }
 
-    public void goToRegistro(View view) {
-        Intent intent = new Intent(this, RegistroActivity.class);
-        startActivity(intent);
-    }
-    public void goToMaps(View view) {
-        Intent intent = new Intent(this, MapsActivity.class);
-        startActivity(intent);
-    }
-    public void irParaActivityAddItens(View view) {
-        Intent intent = new Intent(this, AddItens.class);
-        startActivity(intent);
-    }
 
-    public void irParaActivityAddLocal(View view) {
-        Intent intent = new Intent(this, AddLocal.class);
-        startActivity(intent);
-    }
+
 
 }
