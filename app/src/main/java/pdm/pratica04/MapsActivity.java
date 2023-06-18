@@ -41,6 +41,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
 import pdm.pratica04.databinding.ActivityMapsBinding;
 
@@ -70,6 +71,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     MyApiService apiService = retrofit.create(MyApiService.class);
 
+    public void deleteCentro(int id) {
+        Call<ResponseBody> call = apiService.deleteCentro(id);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    // Manipular a resposta bem-sucedida aqui
+                } else {
+                    // Manipular a resposta de erro aqui
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                // Manipular a falha de rede ou outros erros aqui
+            }
+        });
+    }
 
     private void showEditDialog(Marker marker) {
         // Obter a lista de itens doados do marcador
@@ -183,12 +202,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
+        OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
+        okHttpClientBuilder.authenticator(new OAuth2Interceptor(getIntent().getStringExtra("access_token")));
 
+        OkHttpClient okHttpClient = okHttpClientBuilder.build();
 
         // Criar uma instância do Retrofit
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("http://192.168.0.117:8000") // Substitua pela URL base da sua API
-                .addConverterFactory(GsonConverterFactory.create()) // Converter automaticamente o JSON em objetos Java
+                .client(okHttpClient)
+                .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
         // Criar uma instância da sua interface
@@ -218,10 +241,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     double latitude = 0;
                     double longitude = 0;
                     String nome ="";
+                    int id =0;
                     BitmapDescriptor icon;
                     Marker centrodedoacaoemrecife;
                     for (Centro centro : centros) {
                          nome = centro.getNome();
+                        id = centro.getId();
                          latitude = Double.parseDouble(centro.getLatitude());
                          longitude = Double.parseDouble(centro.getLongitude());
                         teste = new LatLng(latitude, longitude);
@@ -240,6 +265,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                                 snippet("Recebendo:\n- Item 1\n- Item 2\n- Item 3\n- Item 4\n- Item 5").
                                 icon(icon));
+                        centrodedoacaoemrecife.setTag(id);
                         mMap.moveCamera(CameraUpdateFactory.newLatLng(centrodedoacaoemrecife.getPosition()));
 
 
@@ -316,6 +342,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         })
                         .setNeutralButton("Deletar", (dialog, which) -> {
                             // Remover o marcador do mapa
+                            Toast.makeText(getApplicationContext(), "Mensagem de exemplo", Toast.LENGTH_SHORT).show();
+
+                            Object tag = marker.getTag();
+                            if (tag != null) {
+                                int centroId = (int) tag;
+                                Toast.makeText(getApplicationContext(), "Mensagem de exemplo", Toast.LENGTH_SHORT).show();
+
+                                deleteCentro(centroId);
+
+                                // Use o ID do centro conforme necessário
+                            } else {
+                                // O marcador não possui um ID associado
+                            }
                             marker.remove();
                         })
                         .setNegativeButton("Editar", (dialog, which) -> {
@@ -396,10 +435,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 builder.setMessage(marker.getSnippet());
                 builder.setPositiveButton("OK", (dialog, which) -> {
                     dialog.dismiss();
-                }) .setNeutralButton("Deletar", new DialogInterface.OnClickListener() {
+                }) .setNeutralButton("Deletaraqui", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
+                        // Remover o marcador do mapa
+
+                        Object tag = marker.getTag();
+                        if (tag != null) {
+                            int centroId = (int) tag;
+                            Toast.makeText(getApplicationContext(), "Deletar " + centroId, Toast.LENGTH_SHORT).show();
+
+                            deleteCentro(centroId);
+
+                            // Use o ID do centro conforme necessário
+                        } else {
+                            // O marcador não possui um ID associado
+                        }
+                        marker.remove();
                     }
                 }) .setNegativeButton("Editar", new DialogInterface.OnClickListener() {
                     @Override
