@@ -35,6 +35,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
 import pdm.pratica04.model.Centro;
@@ -89,65 +90,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
-    private void showEditDialog(Marker marker) {
-        // Obter a lista de itens doados do marcador
-        String snippet = marker.getSnippet();
-        List<String> items = new ArrayList<>();
-        if (snippet != null && !snippet.isEmpty()) {
-            String[] parts = snippet.split(":\\n")[1].split("\\n");
-            for (String part : parts) {
-                items.add(part.substring(3));
-            }
-        }
-
-        // Criar um layout personalizado para a caixa de diálogo
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-
-        for (String item : items) {
-            // Adicionar uma entrada de texto para cada item doado
-            EditText editText = new EditText(this);
-            editText.setText(item);
-            layout.addView(editText);
-        }
-
-        // Adicionar um botão "Adicionar item"
-        Button addButton = new Button(this);
-        addButton.setText("Adicionar item");
-        addButton.setOnClickListener(view -> {
-            EditText editText = new EditText(this);
-            editText.setHint("Digite o nome do item");
-            layout.addView(editText);
-        });
-        layout.addView(addButton);
-
-        // Exibir a caixa de diálogo para editar os itens
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Editar itens doados")
-                .setView(layout)
-                .setPositiveButton("Salvar", (dialog, which) -> {
-                    // Atualizar os itens doados no marcador
-                    StringBuilder newSnippet = new StringBuilder("Itens doados:\n");
-                    for (int i = 0; i < layout.getChildCount(); i++) {
-                        View child = layout.getChildAt(i);
-                        if (child instanceof EditText) {
-                            String itemName = ((EditText) child).getText().toString().trim();
-                            if (!itemName.isEmpty()) {
-                                newSnippet.append(String.format("%d- %s\n", i + 1, itemName));
-                            }
-                        }
-                    }
-                    if (newSnippet.toString().equals("Itens doados:\n")) {
-                        marker.setSnippet("");
-                    } else {
-                        marker.setSnippet(newSnippet.toString());
-                    }
-                })
-                .setNegativeButton("Cancelar", (dialog, which) -> {
-                    dialog.cancel();
-                })
-                .show();
-    }
 
 
     @Override
@@ -229,7 +171,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Gson gson = new Gson();
                     Type listType = new TypeToken<List<Centro>>() {}.getType();
                     List<Centro> centros = null;
+
                     try {
+
+
                         centros = gson.fromJson(responseBody.string(), listType);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -243,14 +188,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     int id =0;
                     BitmapDescriptor icon;
                     Marker centrodedoacaoemrecife;
+                    System.out.println("opa: "+centros);
                     for (Centro centro : centros) {
                          nome = centro.getNome();
                         id = centro.getId();
-                         latitude = Double.parseDouble(centro.getLatitude());
-                         longitude = Double.parseDouble(centro.getLongitude());
+                         latitude =centro.getLatitude();
+                         longitude = centro.getLongitude();
                         teste = new LatLng(latitude, longitude);
 
-                        if (centro.isCentro()) {
+                        if (centro.isCentroOuPessoa()) {
                             markerTitle = "Centro de doação";
                             icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
                         } else {
@@ -417,6 +363,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             layout.setOrientation(LinearLayout.VERTICAL);
             builder.setView(layout);
 
+
+
+
             // Botão "Adicionar item"
             Button addButton = new Button(this);
             addButton.setText("Adicionar item");
@@ -437,6 +386,58 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         .title(markerTitle)
                         .icon((icon));
                 mMap.addMarker(markerOptions);
+
+
+                Centro centro = new Centro();
+                centro.setNome("Nome do Centro");
+
+                OkHttpClient.Builder okHttpClientBuilder2 = new OkHttpClient.Builder();
+                okHttpClientBuilder2.authenticator(new OAuth2Interceptor(getIntent().getStringExtra("access_token")));
+
+                OkHttpClient okHttpClient2 = okHttpClientBuilder2.build();
+
+                // Criar uma instância do Retrofit
+                Retrofit retrofit2 = new Retrofit.Builder()
+                        .baseUrl("http://192.168.0.117:8000") // Substitua pela URL base da sua API
+                        .client(okHttpClient2)
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build();
+                Toast.makeText(MapsActivity.this, "acess token: " + getIntent().getStringExtra("access_token"), Toast.LENGTH_SHORT).show();
+
+                // Criar uma instância da sua interface
+                MyApiService apiService2 = retrofit2.create(MyApiService.class);
+
+                Headers headers = new Headers.Builder()
+                        .add("Authorization", "Bearer " + getIntent().getStringExtra("access_token"))
+                        .build();
+
+
+
+                Call<ResponseBody> call = apiService2.criarCentro(headers, centro);
+                call.enqueue(new Callback<ResponseBody>() {
+                    @Override
+                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        if (response.isSuccessful()) {
+                            ResponseBody createdCentro = response.body();
+                            Toast.makeText(MapsActivity.this, "Response body: " + createdCentro, Toast.LENGTH_SHORT).show();
+
+                            // O centro foi criado com sucesso, faça o tratamento necessário aqui
+                        } else {
+                            ResponseBody createdCentro = response.body();
+
+                            Toast.makeText(MapsActivity.this, "Response body: " + createdCentro, Toast.LENGTH_SHORT).show();
+
+                            // Houve um erro na criação do centro, faça o tratamento necessário aqui
+                        }
+                    }
+
+
+                    @Override
+                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        // Houve um erro na chamada à API, faça o tratamento necessário aqui
+                    }
+                });
+
 
                 // Adicionar informações adicionais do marcador como um snippet
                 StringBuilder snippet = new StringBuilder("Itens doados:\n");

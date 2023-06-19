@@ -2,6 +2,7 @@ package pdm.pratica04.service;
 
 import java.util.List;
 
+import okhttp3.Headers;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import pdm.pratica04.model.AccessTokenResponse;
@@ -14,6 +15,8 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
+import retrofit2.http.HeaderMap;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
@@ -24,7 +27,7 @@ public interface MyApiService {
     Call<ResponseBody> getCentros();
 
     @POST("/rededobem/Centro/")
-    Call<ResponseBody> createCentro(@Body Centro centro);
+    Call<ResponseBody> criarCentro(@HeaderMap Headers headers, @Body Centro centro);
 
     @POST("/token/")
     Call<AccessTokenResponse> login(@Body LoginRequest loginRequest);
@@ -36,5 +39,6 @@ public interface MyApiService {
 
     @GET("rededobem/ItensCentro/")
     Call<List<Item>> getItensCentro(@Query("itens") String itens, @Query("centro") int centro);
+
 
 }

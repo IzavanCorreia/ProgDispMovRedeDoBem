@@ -71,7 +71,7 @@ public class LoginActivity extends AppCompatActivity implements TokenCallback {
 
                             // Envie o accessToken para uma nova activity
                             Intent intent = new Intent(LoginActivity.this, MapsActivity.class);
-                            intent.putExtra("accessToken", accessToken);
+                            intent.putExtra("access_token", accessToken);
                             Toast.makeText(LoginActivity.this, "Login successful! acess aqui: " + accessToken, Toast.LENGTH_SHORT).show();
 
                             startActivity(intent);

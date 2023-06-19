@@ -1,25 +1,12 @@
 package pdm.pratica04.model;
 
-import com.google.gson.annotations.SerializedName;
-
 public class Centro {
-    @SerializedName("id")
     private int id;
-
-    @SerializedName("nome")
+    private String usuario;
     private String nome;
-
-    @SerializedName("latitude")
-    private String latitude;
-
-    @SerializedName("longitude")
-    private String longitude;
-
-    @SerializedName("CentroOuPessoa")
-    private boolean isCentro;
-
-    @SerializedName("usuario")
-    private int usuario;
+    private double latitude;
+    private double longitude;
+    private boolean CentroOuPessoa;
 
     public int getId() {
         return id;
@@ -27,6 +14,14 @@ public class Centro {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(String usuario) {
+        this.usuario = usuario;
     }
 
     public String getNome() {
@@ -37,35 +32,29 @@ public class Centro {
         this.nome = nome;
     }
 
-    public String getLatitude() {
+    public double getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(String latitude) {
+    public void setLatitude(double latitude) {
         this.latitude = latitude;
     }
 
-    public String getLongitude() {
+    public double getLongitude() {
         return longitude;
     }
 
-    public void setLongitude(String longitude) {
+    public void setLongitude(double longitude) {
         this.longitude = longitude;
     }
 
-    public boolean isCentro() {
-        return isCentro;
+    public boolean isCentroOuPessoa() {
+        return CentroOuPessoa;
     }
 
-    public void setCentro(boolean centro) {
-        isCentro = centro;
+    public void setCentroOuPessoa(boolean centroOuPessoa) {
+        CentroOuPessoa = centroOuPessoa;
     }
 
-    public int getUsuario() {
-        return usuario;
-    }
-
-    public void setUsuario(int usuario) {
-        this.usuario = usuario;
-    }
+    // Rest of the class code
 }
