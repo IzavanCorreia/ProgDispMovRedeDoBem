@@ -1,4 +1,4 @@
-package pdm.pratica04;
+package pdm.pratica04.model;
 
 import com.google.gson.annotations.SerializedName;
 

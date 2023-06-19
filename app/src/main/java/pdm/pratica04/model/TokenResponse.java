@@ -1,4 +1,4 @@
-package pdm.pratica04;
+package pdm.pratica04.model;
 
 public class TokenResponse {
     private String refresh;

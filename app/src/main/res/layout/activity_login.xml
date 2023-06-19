@@ -37,11 +37,12 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/editTextPassword"
         android:layout_marginTop="20dp"
+        android:onClick="goToLogin"
+        android:padding="10dp"
         android:text="Entrar"
         android:textColor="#00BCD4"
         app:backgroundTint="#FFFFFF"
-        app:cornerRadius="8dp"
-        android:padding="10dp"/>
+        app:cornerRadius="8dp" />
 
     <TextView
         android:id="@+id/textViewRegister"

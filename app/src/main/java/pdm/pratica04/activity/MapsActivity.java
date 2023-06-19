@@ -1,4 +1,4 @@
-package pdm.pratica04;
+package pdm.pratica04.activity;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -9,20 +9,15 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -32,7 +27,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.Task;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -43,8 +37,13 @@ import java.util.List;
 
 import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
+import pdm.pratica04.model.Centro;
+import pdm.pratica04.OAuth2Interceptor;
+import pdm.pratica04.R;
 import pdm.pratica04.databinding.ActivityMapsBinding;
 
+import pdm.pratica04.model.Item;
+import pdm.pratica04.service.MyApiService;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -65,7 +64,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     Retrofit retrofit = new Retrofit.Builder()
-            .baseUrl("http://127.0.0.1:8000")
+            .baseUrl("http://192.168.0.117:8000")
             .addConverterFactory(GsonConverterFactory.create())
             .build();
 
@@ -259,11 +258,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE);
                         }
 
+
                          centrodedoacaoemrecife = mMap.addMarker(new MarkerOptions().
                                 position(teste).
                                 title(nome).
 
-                                snippet("Recebendo:\n- Item 1\n- Item 2\n- Item 3\n- Item 4\n- Item 5").
+                                snippet("").
                                 icon(icon));
                         centrodedoacaoemrecife.setTag(id);
                         mMap.moveCamera(CameraUpdateFactory.newLatLng(centrodedoacaoemrecife.getPosition()));
@@ -284,6 +284,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     // Faça o tratamento de erro apropriado
                 }
+
             }
 
             @Override
@@ -296,138 +297,61 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-        // Restante do código para adicionar marcadores e manipular eventos do mapa...
-
 
 
         mMap.setOnMarkerClickListener(marker -> {
-            // Verificar se o marcador foi criado pelo usuário (e não pelo sistema)
-            if (!marker.getTitle().equals("Localização atual")) {
-                String title = marker.getTitle();
-                String snippet = marker.getSnippet();
-                if (snippet == null || snippet.isEmpty()) {
-                    snippet = "Nenhum item doado registrado";
+
+            Retrofit retrofit2 = new Retrofit.Builder()
+                    .baseUrl("http://192.168.0.117:8000/")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+
+            MyApiService apiService2 = retrofit2.create(MyApiService.class);
+            Object tag2 = marker.getTag();
+            int centroId2 = 0;
+            if (tag2 != null) {
+                 centroId2 = (int) tag2;
+            }
+            else {
+                 centroId2 = 0;
+
+            }
+
+            Call<List<Item>> call = apiService2.getItensCentro("", centroId2);
+            call.enqueue(new Callback<List<Item>>() {
+                @Override
+                public void onResponse(Call<List<Item>> call, Response<List<Item>> response) {
+                    if (response.isSuccessful()) {
+                        List<Item> items = response.body();
+
+                        StringBuilder concatenatedItems = new StringBuilder();
+
+                        for (Item item : items) {
+                            concatenatedItems.append("Item ")
+                                    .append(item.getId())
+                                    .append(": ")
+                                    .append(item.getItens())
+                                    .append("\n");
+                        }
+
+                        // Use a string concatenada como necessário
+                        String result = concatenatedItems.toString();
+                        System.out.println(result);
+
+                        marker.setSnippet(result);
+
+                    } else {
+                        // Handle error response
+                    }
                 }
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                String finalSnippet = snippet;
-                builder.setTitle(title)
-                        .setMessage(snippet)
-                        .setPositiveButton("OK", (dialog, which) -> {
-                            dialog.dismiss();
-                        })
-                        .setNegativeButton("Visualizar", (dialog, which) -> {
-                            // Abrir um novo AlertDialog para visualizar os itens doados
-                            AlertDialog.Builder viewBuilder = new AlertDialog.Builder(this);
-                            viewBuilder.setTitle("Itens doados");
 
-                            // Configurar os itens doados
-                            final LinearLayout layout = new LinearLayout(this);
-                            layout.setOrientation(LinearLayout.VERTICAL);
-                            viewBuilder.setView(layout);
-
-                            // Adicionar os itens doados como campos de texto desabilitados
-                            String[] items = finalSnippet.split("\n");
-                            for (int i = 1; i < items.length; i++) {
-                                TextView itemText = new TextView(this);
-                                itemText.setText(items[i].substring(3)); // Ignorar o número de item (exemplo: "1- Arroz" -> "Arroz")
-                                itemText.setEnabled(false);
-                                layout.addView(itemText);
-                            }
-
-                            // Configurar o botão "OK"
-                            viewBuilder.setPositiveButton("OK", (viewDialog, viewWhich) -> {
-                                // Não fazer nada
-                            });
-                            viewBuilder.show();
-                        })
-                        .setNeutralButton("Deletar", (dialog, which) -> {
-                            // Remover o marcador do mapa
-                            Toast.makeText(getApplicationContext(), "Mensagem de exemplo", Toast.LENGTH_SHORT).show();
-
-                            Object tag = marker.getTag();
-                            if (tag != null) {
-                                int centroId = (int) tag;
-                                Toast.makeText(getApplicationContext(), "Mensagem de exemplo", Toast.LENGTH_SHORT).show();
-
-                                deleteCentro(centroId);
-
-                                // Use o ID do centro conforme necessário
-                            } else {
-                                // O marcador não possui um ID associado
-                            }
-                            marker.remove();
-                        })
-                        .setNegativeButton("Editar", (dialog, which) -> {
-                            // Abrir um novo AlertDialog para editar os itens doados
-                            AlertDialog.Builder editBuilder = new AlertDialog.Builder(this);
-                            editBuilder.setTitle("Editar itens doados");
-
-                            // Configurar os itens doados
-                            final List<String> donatedItems = new ArrayList<>();
-                            final LinearLayout layout = new LinearLayout(this);
-                            layout.setOrientation(LinearLayout.VERTICAL);
-                            editBuilder.setView(layout);
-
-                            // Adicionar os itens doados atuais como campos de edição de texto pré-preenchidos
-                            String[] items = finalSnippet.split("\n");
-                            for (int i = 1; i < items.length; i++) {
-                                final EditText itemInput = new EditText(this);
-                                itemInput.setText(items[i].substring(3)); // Ignorar o número de item (exemplo: "1- Arroz" -> "Arroz")
-                                layout.addView(itemInput);
-                                donatedItems.add(items[i].substring(3));
-                            }
-
-                            // Botão "Adicionar item"
-                            Button addButton = new Button(this);
-                            addButton.setText("Adicionar item");
-                            addButton.setOnClickListener(view -> {
-                                final EditText itemInput = new EditText(this);
-                                itemInput.setHint("Digite o nome do item");
-                                layout.addView(itemInput);
-                            });
-                            layout.addView(addButton);
-
-                            // Configurar os botões "Salvar" e "Cancelar"
-                            editBuilder.setPositiveButton("Salvar", (editDialog, editWhich) -> {
-// Criar um novo snippet com os itens doados atualizados
-                                    StringBuilder newSnippet = new StringBuilder();
-                            newSnippet.append("Itens doados:\n");
-                            int itemCount = 1;
-                            for (int i = 0; i < layout.getChildCount(); i++) {
-                                View child = layout.getChildAt(i);
-                                if (child instanceof EditText) {
-                                    String itemName = ((EditText) child).getText().toString();
-                                    if (!itemName.isEmpty()) {
-                                        newSnippet.append(itemCount).append("- ").append(itemName).append("\n");
-                                        donatedItems.add(itemName);
-                                        itemCount++;
-                                    }
-                                }
-                            }                    // Atualizar o snippet do marcador e exibir uma mensagem de sucesso
-                            marker.setSnippet(newSnippet.toString());
-                            Toast.makeText(this, "Itens doados atualizados com sucesso!", Toast.LENGTH_SHORT).show();
-                        })
-                        .setNegativeButton("Cancelar", (editDialog, editWhich) -> {
-                            // Não fazer nada
-                        })
-                        .show();
+                @Override
+                public void onFailure(Call<List<Item>> call, Throwable t) {
+                    // Handle failure
+                }
             });
 
-            return true;
-        }
 
-        return false;
-    });
-
-
-
-
-
-
-
-
-
-        mMap.setOnMarkerClickListener(marker -> {
             if (marker.getSnippet() != null && !marker.getSnippet().isEmpty()) {
                 // Exibir as informações adicionais do marcador em um diálogo
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
