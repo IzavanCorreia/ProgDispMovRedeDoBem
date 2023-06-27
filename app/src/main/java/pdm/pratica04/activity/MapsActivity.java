@@ -9,6 +9,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -18,6 +19,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -27,6 +30,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.Task;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -52,6 +56,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -192,8 +197,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     for (Centro centro : centros) {
                          nome = centro.getNome();
                         id = centro.getId();
-                         latitude =centro.getLatitude();
-                         longitude = centro.getLongitude();
+                         latitude = Double.parseDouble(centro.getLatitude());
+                         longitude = Double.parseDouble(centro.getLongitude());
                         teste = new LatLng(latitude, longitude);
 
                         if (centro.isCentroOuPessoa()) {
@@ -212,9 +217,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 snippet("").
                                 icon(icon));
                         centrodedoacaoemrecife.setTag(id);
-                        mMap.moveCamera(CameraUpdateFactory.newLatLng(centrodedoacaoemrecife.getPosition()));
+                        //mMap.moveCamera(CameraUpdateFactory.newLatLng(centrodedoacaoemrecife.getPosition()));
+                        mMap.animateCamera(CameraUpdateFactory.zoomTo(20.0f));
+                        Toast.makeText(MapsActivity.this,
+                                "Indo para a sua localização.", Toast.LENGTH_SHORT).show();
+                        FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+                        Task<Location> task = fusedLocationProviderClient.getLastLocation();
+                        task.addOnSuccessListener(location -> {
+                            if (location != null) {
+                                LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
 
+                                // Definir o nível de zoom desejado (ajuste conforme necessário)
+                                float zoomLevel = 20.0f;
 
+                                // Movimentar a câmera para a localização atual do usuário com o zoom desejado
+                                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLocation, zoomLevel));
+                            }
+                        });
                         // Faça o que for necessário com os dados obtidos
                         Log.i("API Success", "Nome: " + nome + ", Latitude: " + latitude + ", Longitude: " + longitude);
                     }
@@ -342,6 +361,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         mMap.setOnMapClickListener(latLng -> {
+
+
+            AtomicReference<String> centroTitle = new AtomicReference<>("");
+
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Novo ponto, você é um doador ou um centro de doação?");
 
@@ -363,6 +386,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             layout.setOrientation(LinearLayout.VERTICAL);
             builder.setView(layout);
 
+            final EditText titleInput = new EditText(this);
+            titleInput.setHint("Digite o título do centro");
+            layout.addView(titleInput);
+
 
 
 
@@ -376,10 +403,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             });
             layout.addView(addButton);
 
-            // Configurar os botões "OK" e "Cancelar"
             builder.setPositiveButton("OK", (dialog, which) -> {
                 // Adicionar marcador com título e ícone baseado na opção selecionada
                 markerTitle = isDonor ? "Doador" : "Centro de doação";
+                centroTitle.set(titleInput.getText().toString().trim());
+
+                // Configurar os botões "OK" e "Cancelar"
+                String finalCentroTitle = centroTitle.get();
+
+                if (!finalCentroTitle.isEmpty()) {
+                    markerTitle += ": " + finalCentroTitle;
+                }
                 BitmapDescriptor icon = isDonor ? BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE) : BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
                 MarkerOptions markerOptions = new MarkerOptions()
                         .position(latLng)
@@ -389,7 +423,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
                 Centro centro = new Centro();
-                centro.setNome("Nome do Centro");
+
+                double latitude = latLng.latitude;
+                double longitude = latLng.longitude;
+
+                String latitudeString = String.valueOf(latitude);
+                String longitudeString = String.valueOf(longitude);
+
+                centro.setNome(finalCentroTitle);
+                centro.setCentroOuPessoa(isDonor);
+                centro.setLatitude(latitudeString);
+                centro.setLongitude(longitudeString);
+                Toast.makeText(MapsActivity.this, "final centro: " + finalCentroTitle, Toast.LENGTH_SHORT).show();
 
                 OkHttpClient.Builder okHttpClientBuilder2 = new OkHttpClient.Builder();
                 okHttpClientBuilder2.authenticator(new OAuth2Interceptor(getIntent().getStringExtra("access_token")));
@@ -398,7 +443,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 // Criar uma instância do Retrofit
                 Retrofit retrofit2 = new Retrofit.Builder()
-                        .baseUrl("http://192.168.0.117:8000") // Substitua pela URL base da sua API
+                        .baseUrl("http://192.168.0.117:8000/") // Substitua pela URL base da sua API
                         .client(okHttpClient2)
                         .addConverterFactory(GsonConverterFactory.create())
                         .build();
@@ -469,11 +514,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mMap.setOnMyLocationButtonClickListener(
                 () -> {
+                    mMap.animateCamera(CameraUpdateFactory.zoomTo(20.0f));
                     Toast.makeText(MapsActivity.this,
                             "Indo para a sua localização.", Toast.LENGTH_SHORT).show();
+                    FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+                    Task<Location> task = fusedLocationProviderClient.getLastLocation();
+                    task.addOnSuccessListener(location -> {
+                        if (location != null) {
+                            LatLng userLocation = new LatLng(location.getLatitude(), location.getLongitude());
+
+                            // Definir o nível de zoom desejado (ajuste conforme necessário)
+                            float zoomLevel = 20.0f;
+
+                            // Movimentar a câmera para a localização atual do usuário com o zoom desejado
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLocation, zoomLevel));
+                        }
+                    });
+
                     return false;
                 });
-
         mMap.setOnMyLocationClickListener(
                 location -> Toast.makeText(MapsActivity.this,
                         "Você está aqui!", Toast.LENGTH_SHORT).show());

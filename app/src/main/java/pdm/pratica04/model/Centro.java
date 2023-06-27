@@ -4,8 +4,8 @@ public class Centro {
     private int id;
     private String usuario;
     private String nome;
-    private double latitude;
-    private double longitude;
+    private String latitude;
+    private String longitude;
     private boolean CentroOuPessoa;
 
     public int getId() {
@@ -32,20 +32,20 @@ public class Centro {
         this.nome = nome;
     }
 
-    public double getLatitude() {
+    public String getLatitude() {
         return latitude;
     }
 
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
+    public void setLatitude(String latitude) {
+        this.latitude = String.valueOf(latitude);
     }
 
-    public double getLongitude() {
+    public String getLongitude() {
         return longitude;
     }
 
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
+    public void setLongitude(String longitude) {
+        this.longitude = String.valueOf(longitude);
     }
 
     public boolean isCentroOuPessoa() {

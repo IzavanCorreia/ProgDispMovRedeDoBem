@@ -78,6 +78,8 @@ public class LoginActivity extends AppCompatActivity implements TokenCallback {
                             finish();
                         } else {
                             // Lidar com erro na resposta
+                            Toast.makeText(LoginActivity.this, "Login FALHOU! acess aqui: ", Toast.LENGTH_SHORT).show();
+
                         }
                     }
 
