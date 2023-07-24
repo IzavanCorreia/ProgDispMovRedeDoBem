@@ -24,7 +24,14 @@
             android:exported="false" />
         <activity
             android:name=".activity.LoginActivity"
-            android:exported="false" />
+            android:exported="true" >
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        </activity>
+
         <activity
             android:name=".MarkerTitleActivity"
             android:exported="false" />
@@ -56,11 +63,7 @@
             android:name=".activity.MapsActivity"
             android:exported="true"
             android:label="@string/title_activity_maps">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
     </application>
 

@@ -6,9 +6,12 @@ import androidx.fragment.app.FragmentActivity;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -70,7 +73,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     Retrofit retrofit = new Retrofit.Builder()
-            .baseUrl("http://192.168.0.117:8000")
+            .baseUrl("http://192.168.89.189:8000")
             .addConverterFactory(GsonConverterFactory.create())
             .build();
 
@@ -99,6 +102,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
+
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bottom_navigation);
 
@@ -155,7 +163,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Criar uma instância do Retrofit
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://192.168.0.117:8000") // Substitua pela URL base da sua API
+                .baseUrl("http://192.168.89.189:8000") // Substitua pela URL base da sua API
                 .client(okHttpClient)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
@@ -191,6 +199,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     double longitude = 0;
                     String nome ="";
                     int id =0;
+
+                    int width = 100; // Largura desejada em pixels
+                    int height = 100; // Altura desejada em pixels
+
                     BitmapDescriptor icon;
                     Marker centrodedoacaoemrecife;
                     System.out.println("opa: "+centros);
@@ -203,10 +215,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                         if (centro.isCentroOuPessoa()) {
                             markerTitle = "Centro de doação";
-                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
+
+                            Bitmap originalBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.centro);
+                            Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, width, height, false);
+
+                            icon = BitmapDescriptorFactory.fromBitmap(resizedBitmap);
+
+
                         } else {
                             markerTitle = "Pessoa";
-                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE);
+                            Bitmap originalBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.perfil);
+                            Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, width, height, false);
+
+                            icon = BitmapDescriptorFactory.fromBitmap(resizedBitmap);
+
                         }
 
 
@@ -221,7 +243,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         mMap.animateCamera(CameraUpdateFactory.zoomTo(20.0f));
                         Toast.makeText(MapsActivity.this,
                                 "Indo para a sua localização.", Toast.LENGTH_SHORT).show();
-                        FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+                        Context context = getApplicationContext(); // or use an appropriate Context object
+                        FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
                         Task<Location> task = fusedLocationProviderClient.getLastLocation();
                         task.addOnSuccessListener(location -> {
                             if (location != null) {
@@ -267,7 +290,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMarkerClickListener(marker -> {
 
             Retrofit retrofit2 = new Retrofit.Builder()
-                    .baseUrl("http://192.168.0.117:8000/")
+                    .baseUrl("http://192.168.89.189:8000/")
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
 
@@ -324,10 +347,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 builder.setMessage(marker.getSnippet());
                 builder.setPositiveButton("OK", (dialog, which) -> {
                     dialog.dismiss();
-                }) .setNeutralButton("Deletaraqui", new DialogInterface.OnClickListener() {
+                }) .setNeutralButton("Deletar", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // Remover o marcador do mapa
+                        Toast.makeText(getApplicationContext(), "Clicou " + "alo", Toast.LENGTH_SHORT).show();
 
                         Object tag = marker.getTag();
                         if (tag != null) {
@@ -338,16 +362,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                             // Use o ID do centro conforme necessário
                         } else {
+                            Toast.makeText(getApplicationContext(), "Não tem id " + "alo", Toast.LENGTH_SHORT).show();
+
                             // O marcador não possui um ID associado
                         }
                         marker.remove();
                     }
-                }) .setNegativeButton("Editar", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
+                }) ;
                 builder.show();
                 return true;
             } else {
@@ -414,7 +435,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (!finalCentroTitle.isEmpty()) {
                     markerTitle += ": " + finalCentroTitle;
                 }
-                BitmapDescriptor icon = isDonor ? BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE) : BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED);
+
+
+                int width = 100; // Largura desejada em pixels
+                int height = 100; // Altura desejada em pixels
+
+                Bitmap originalBitmap = BitmapFactory.decodeResource(getResources(), isDonor ? R.drawable.perfil : R.drawable.centro);
+                Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, width, height, false);
+
+                BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(resizedBitmap);
                 MarkerOptions markerOptions = new MarkerOptions()
                         .position(latLng)
                         .title(markerTitle)
@@ -443,7 +472,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 // Criar uma instância do Retrofit
                 Retrofit retrofit2 = new Retrofit.Builder()
-                        .baseUrl("http://192.168.0.117:8000/") // Substitua pela URL base da sua API
+                        .baseUrl("http://192.168.89.189:8000/") // Substitua pela URL base da sua API
                         .client(okHttpClient2)
                         .addConverterFactory(GsonConverterFactory.create())
                         .build();

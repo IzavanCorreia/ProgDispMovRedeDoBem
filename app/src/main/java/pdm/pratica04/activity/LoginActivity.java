@@ -49,7 +49,7 @@ public class LoginActivity extends AppCompatActivity implements TokenCallback {
 
 
                 Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl("http://192.168.0.117:8000/") // Substitua pela sua URL base
+                        .baseUrl("http://192.168.89.189:8000/") // Substitua pela sua URL base
                         .addConverterFactory(GsonConverterFactory.create())
                         .build();
                 MyApiService apiService;
